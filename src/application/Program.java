@@ -15,15 +15,13 @@ public class Program {
 		try {
 			conn = DB.getConection();
 			
-			st = conn.prepareStatement(
-					"UPDATE seller "
-					+ "SET BaseSalary = BaseSalary + ? "
-					+ "WHERE "
-					+"(DepartmentId = ?)");
+			st = conn.prepareStatement( //códigos SQL
+					"DELETE FROM department " //objeto a ser deletado
+					+ "WHERE " //condição para deletar apenas o desejado
+					+ "Id = ?");//campo a ser deletado
 			
-			//Adicionar para atualizar valor para atualizar o salario
-			st.setDouble(1, 200.0); //1= primeira ?, 200.0 = valor a ser atualizado
-			st.setInt(2, 2); //2= segunda ?, 2 = Id da coluna a ser atualizada
+			st.setInt(1, 5);//1= ?, 5= valor procurado na tabela para deletar
+			//Não se pode deletar ou atualizar registros PAI, por vínculo com chaves estrangeiras(herdeiras) 
 			
 			int rowsAffected = st.executeUpdate();
 			
