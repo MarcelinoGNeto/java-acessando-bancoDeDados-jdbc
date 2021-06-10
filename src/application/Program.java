@@ -1,34 +1,53 @@
 package application;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
+
+import com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping;
 
 import db.DB;
+import db.DbException;
 
 public class Program {
 
 	public static void main(String[] args) {
 		
 		Connection conn = null;
-		PreparedStatement st = null;
+		Statement st = null;
 		try {
 			conn = DB.getConection();
 			
-			st = conn.prepareStatement( //códigos SQL
-					"DELETE FROM department " //objeto a ser deletado
-					+ "WHERE " //condição para deletar apenas o desejado
-					+ "Id = ?");//campo a ser deletado
+//lógica para confirmação de TRANSAÇÃO: caso a operação seja verdadeira até o final 
+//Neste exemplo, a transação não será confirmada, tendo o seu valor retornado e não alterado.
 			
-			st.setInt(1, 5);//1= ?, 5= valor procurado na tabela para deletar
-			//Não se pode deletar ou atualizar registros PAI, por vínculo com chaves estrangeiras(herdeiras) 
+			conn.setAutoCommit(false);
 			
-			int rowsAffected = st.executeUpdate();
+			st = conn.createStatement();
 			
-			System.out.println("Done! Rows affected: " + rowsAffected);
+			int rows1 = st.executeUpdate("UPDATE seller SET BaseSalary = 2090 WHERE DepartmentId = 1");
+
+			//simulação de possivel erro, para aplicação de transição
+			/*
+			int x = 1;
+			if (x < 2) {
+				throw new SQLException("Fake error");
+			}
+			*/
+			int rows2 = st.executeUpdate("UPDATE seller SET BaseSalary = 3090 WHERE DepartmentId = 2");
+			
+			conn.commit(); //fim da verificação de confirmação verdadeira da lógica de TRANSAÇÃO
+			
+			System.out.println("rows1 " + rows1);
+			System.out.println("rows2 " + rows2);
 		}
 		catch (SQLException e) {
-			e.printStackTrace();
+			try {//Erro para informar que a transação não ocorreu, está retornando a ação
+				conn.rollback();
+				throw new DbException("Transaction rolled back! Caused by: " + e.getMessage());
+			} catch (SQLException e1) {
+				 throw new DbException("Error trying to rollback! Caused by: " + e1.getMessage());
+			}
 		}
 		finally {
 			DB.closeStatement(st);
